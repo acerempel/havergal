@@ -22,14 +22,14 @@ function App() {
     })
   }
 
-  function importTransactions(results) {
+  async function importTransactions(results) {
     if (results.errors.length > 0) {
       setParseErrors(results.errors);
       return;
     }
     const t_tra = grist.getTable("Transactions");
     const t_imp = grist.getTable("Imported");
-    const rules = grist.docApi.fetchTable("Rules");
+    const rules = await grist.docApi.fetchTable("Rules");
     const srule = [];
     for (const col in rules) {
       rules[col].forEach((val, ix) => {
@@ -39,7 +39,7 @@ function App() {
         srule[ix][col] = val;
       })
     }
-    t_imp.create(results.data)
+    return await t_imp.create(results.data);
   }
 
   return (
