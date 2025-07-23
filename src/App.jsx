@@ -12,6 +12,7 @@ function App() {
     ev.preventDefault();
     Papa.parse(file_input.files[0], {
       header: true,
+      transformHeader: (header, _ix) => (header.trim()),
       skipEmptyLines: true,
       error: (er) => {
         console.error(`Unable to read file: ${er}`)
