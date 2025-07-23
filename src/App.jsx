@@ -39,7 +39,7 @@ function App() {
         srule[ix][col] = val;
       })
     }
-    return await t_imp.create(results.data.map((row) => {fields: row}), {parseStrings: true});
+    return await t_imp.create(results.data.map((row) => ({fields: row})), {parseStrings: true});
   }
 
   return (
