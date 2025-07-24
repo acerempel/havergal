@@ -1,15 +1,15 @@
 import {onMount, createSignal, Show, For} from 'solid-js';
 import Papa from 'papaparse';
 
-function matches(rule, rec) {
+function matches(rule, rec, account) {
   const amount = (rec.Funds_In || 0)  - (rec.Funds_Out || 0);
   return (
     ((rule.Match_type == 'Starts with' && rec.Transaction_Details.startsWith(rule.Match_text))
      || (rule.Match_type == 'Contains' && rec.includes(rule.Match_text))
      || (rule.Match_type == 'Ends with' && rec.endsWith(rule.Match_text)))
-    && (rule.Account == null || false /* todo */)
-    && (rule.Amount_min == 0 or rule.Amount_min <= amount)
-    && (rule.Amount_max == 0 or rule.Amount_max >= amount)
+    && (rule.Account == null || rule.Account == account)
+    && (rule.Amount_min == 0 || rule.Amount_min <= amount)
+    && (rule.Amount_max == 0 || rule.Amount_max >= amount)
   )
 }
 
@@ -18,14 +18,29 @@ function apply(rule, rec) {
 }
 
 function App() {
-  onMount(() => grist.ready({requiredAccess: 'full'}))
+  const [accounts, setAccounts] = createSignal([]);
+
+  onMount(async () => {
+    grist.ready({requiredAccess: 'full'})
+    const accs = await grist.docApi.fetchTable("Accounts");
+    const ccsa = accs.id.flatMap((acid, ix) => {
+      if (accs.Kind[ix] == "Assets" || accs.Kind[ix] == "Liability") {
+        return {id: acid, Name: accs.Name}
+      } else {
+        return []
+      }
+    })
+    setAccounts(ccsa)
+  })
 
   let file_input;
+  let acc_sel;
 
   const [parseErrors, setParseErrors] = createSignal([]);
 
   function submitForm(ev) {
     ev.preventDefault();
+    const acc = acc_sel.value;
     Papa.parse(file_input.files[0], {
       header: true,
       transformHeader: (header, _ix) => (header.trim().replaceAll(" ", "_")),
@@ -34,12 +49,12 @@ function App() {
         console.error(`Unable to read file: ${er}`)
       },
       complete: (results, _file) => {
-        importTransactions(results)
+        importTransactions(results, acc)
       }
     })
   }
 
-  async function importTransactions(results) {
+  async function importTransactions(results, acct_id) {
     if (results.errors.length > 0) {
       setParseErrors(results.errors);
       return;
@@ -60,7 +75,7 @@ function App() {
     recs = []
     for (const rec of results.data) {
       for (const rule of srule) {
-        if matches(rule, rec) {
+        if matches(rule, rec, acct_id) {
           apply(rule, rec);
           recs.push(rec);
           break;
@@ -77,6 +92,11 @@ function App() {
           Choose a CSV file containing transactions to import.
           <input ref={file_input} type="file" name="transactions" accept="text/csv" />
         </label>
+        <label>
+          Select an account to import these transactions into.
+          <select ref={acc_sel} name="account">
+            {accounts().map((ac) => <option value="{ac.id}">{ac.Name}</option>)}
+          </select>
         <button type="submit">Import</button>
       </form>
       <Show when={parseErrors().length > 0}>
