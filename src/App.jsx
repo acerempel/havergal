@@ -1,6 +1,22 @@
 import {onMount, createSignal, Show, For} from 'solid-js';
 import Papa from 'papaparse';
 
+function matches(rule, rec) {
+  const amount = (rec.Funds_In || 0)  - (rec.Funds_Out || 0);
+  return (
+    ((rule.Match_type == 'Starts with' && rec.Transaction_Details.startsWith(rule.Match_text))
+     || (rule.Match_type == 'Contains' && rec.includes(rule.Match_text))
+     || (rule.Match_type == 'Ends with' && rec.endsWith(rule.Match_text)))
+    && (rule.Account == null || false /* todo */)
+    && (rule.Amount_min == 0 or rule.Amount_min <= amount)
+    && (rule.Amount_max == 0 or rule.Amount_max >= amount)
+  )
+}
+
+function apply(rule, rec) {
+  return;
+}
+
 function App() {
   onMount(() => grist.ready({requiredAccess: 'full'}))
 
@@ -39,6 +55,17 @@ function App() {
         }
         srule[ix][col] = val;
       })
+    }
+    srule.sort((a, b) => a.Priority - b.Priority)
+    recs = []
+    for (const rec of results.data) {
+      for (const rule of srule) {
+        if matches(rule, rec) {
+          apply(rule, rec);
+          recs.push(rec);
+          break;
+        }
+      }
     }
     return await t_imp.create(results.data.map((row) => ({fields: row})), {parseStrings: true});
   }
