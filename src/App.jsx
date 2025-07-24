@@ -8,8 +8,8 @@ function matches(rule, rec, account) {
      || (rule.Match_type == 'Contains' && rec.includes(rule.Match_text))
      || (rule.Match_type == 'Ends with' && rec.endsWith(rule.Match_text)))
     && (rule.Account == null || rule.Account == account)
-    && (rule.Amount_min == 0 || rule.Amount_min <= amount)
-    && (rule.Amount_max == 0 || rule.Amount_max >= amount)
+    && (rule.Amount_min == 0 || rule.Amount_min >= amount)
+    && (rule.Amount_max == 0 || rule.Amount_max <= amount)
   )
 }
 
@@ -75,7 +75,7 @@ function App() {
     recs = []
     for (const rec of results.data) {
       for (const rule of srule) {
-        if matches(rule, rec, acct_id) {
+        if (matches(rule, rec, acct_id)) {
           apply(rule, rec);
           recs.push(rec);
           break;
@@ -97,6 +97,7 @@ function App() {
           <select ref={acc_sel} name="account">
             {accounts().map((ac) => <option value="{ac.id}">{ac.Name}</option>)}
           </select>
+        </label>
         <button type="submit">Import</button>
       </form>
       <Show when={parseErrors().length > 0}>
