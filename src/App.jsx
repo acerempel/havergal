@@ -95,7 +95,7 @@ function App() {
         <label>
           Select an account to import these transactions into.
           <select ref={acc_sel} name="account">
-            {accounts().map((ac) => <option value="{ac.id}">{ac.Name}</option>)}
+            {accounts().map((ac) => <option value={ac.id}>{ac.Name}</option>)}
           </select>
         </label>
         <button type="submit">Import</button>
