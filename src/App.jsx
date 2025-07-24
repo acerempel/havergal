@@ -25,7 +25,7 @@ function App() {
     const accs = await grist.docApi.fetchTable("Accounts");
     const ccsa = accs.id.flatMap((acid, ix) => {
       if (accs.Kind[ix] == "Assets" || accs.Kind[ix] == "Liability") {
-        return {id: acid, Name: accs.Name}
+        return {id: acid, Name: accs.Name[ix]}
       } else {
         return []
       }
