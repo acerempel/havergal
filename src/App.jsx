@@ -72,7 +72,7 @@ function App() {
       })
     }
     srule.sort((a, b) => a.Priority - b.Priority)
-    recs = []
+    const recs = []
     for (const rec of results.data) {
       for (const rule of srule) {
         if (matches(rule, rec, acct_id)) {
